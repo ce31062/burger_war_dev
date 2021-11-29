@@ -7,6 +7,8 @@
 # and add some functions
 import numpy
 
+print("sumtree.pyを実行する")
+
 class SumTree:
     write = 0
 

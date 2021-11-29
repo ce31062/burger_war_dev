@@ -4,6 +4,7 @@
 from state import State
 from transition import Transition
 
+print("replaymemory.pyを実行する")
 class ReplayMemory(object):
 
     def __init__(self, CAPACITY):

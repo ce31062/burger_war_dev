@@ -1,6 +1,5 @@
 import numpy as np
 
-
 def lidar_transform(lidar, debug=True):
 
     if debug:

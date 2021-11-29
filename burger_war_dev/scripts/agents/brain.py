@@ -21,15 +21,18 @@ from utils.permemory import PERMemory
 from networks.maskNet import MaskNet
 import pickle
 
+print("brain.pyを実行する")
 #------------------------------------------------
 
 class Brain:
     TARGET_UPDATE = 10
     def __init__(self, num_actions, batch_size=32, capacity=10000, gamma=0.99, prioritized=True, lr=0.0005):
+	print("Brainの初期化")
         self.batch_size = batch_size
         self.gamma = gamma
         self.num_actions = num_actions
         self.prioritized = prioritized
+
 
         # Instantiate memory object
         if self.prioritized:
@@ -46,8 +49,9 @@ class Brain:
 
         # Set device type; GPU or CPU (Use GPU if available)
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-        #self.device = torch.device('cpu')
+        self.device = torch.device('cpu') #temporary setting
         self.policy_net = self.policy_net.to(self.device)
+
         self.target_net = self.target_net.to(self.device)
 
         print('using device:', self.device)
@@ -58,7 +62,7 @@ class Brain:
 
     def replay(self):
         """Experience Replayでネットワークの重みを学習 """
-
+	print("Experience Replayでネットワークの重みを学習 ")
         # Do nothing while size of memory is lower than batch size
         if len(self.memory) < self.batch_size:
             return
@@ -157,7 +161,6 @@ class Brain:
     def decide_action(self, state, episode, policy_mode="epsilon", debug=True):
         """
         policy
-
         Args:
             state (State): state object
             episode (int): current episode
@@ -169,7 +172,7 @@ class Brain:
 
         if not debug:
             self.policy_net.eval()  # ネットワークを推論モードに切り替える
-
+            print("推論を行う")
             # Set device type; GPU or CPU
             input_pose = Variable(state.pose).to(self.device)
             input_lidar = Variable(state.lidar).to(self.device)
@@ -185,6 +188,7 @@ class Brain:
         if policy_mode == "epsilon":
             # ε-greedy法で徐々に最適行動のみを採用する
             # epsilon = 0.5 * (1 / (episode + 1))
+            print("ε-greedy法を採用する")
             if episode < 50:
                 epsilon = 0.25
             elif episode < 100:
@@ -194,7 +198,6 @@ class Brain:
 
             if epsilon <= np.random.uniform(0, 1):
                 self.policy_net.eval()  # ネットワークを推論モードに切り替える
-
                 # Set device type; GPU or CPU
                 input_pose = Variable(state.pose).to(self.device)
                 input_lidar = Variable(state.lidar).to(self.device)
@@ -213,6 +216,7 @@ class Brain:
                 print("Random action: {}".format(action.item()))
 
         elif policy_mode == "boltzmann":
+            print("boltzmann法を採用する")
             self.policy_net.eval()  # ネットワークを推論モードに切り替える
 
             # Set device type; GPU or CPU

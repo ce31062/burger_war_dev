@@ -6,6 +6,8 @@ from state import State
 from transition import Transition
 from replaymemory import ReplayMemory
 
+print("random_replaymemory.pyを実行する")
+
 class RandomReplayMemory(ReplayMemory):
 
     def push(self, state, action, state_next, reward):

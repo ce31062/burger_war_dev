@@ -31,7 +31,6 @@ import queue
 import select
 import multiprocessing as mp
 
-
 def send_recv(conn, sdata):
     conn.send(sdata)
     rdata = conn.recv()

@@ -3,6 +3,7 @@
 
 from agents.agent_conn import AgentServer
 
+print("dqn_learning.py")
 PORT = 5010
 
 agent_server = AgentServer(PORT)

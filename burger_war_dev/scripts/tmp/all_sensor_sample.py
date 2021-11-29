@@ -21,6 +21,7 @@ from cv_bridge import CvBridge, CvBridgeError
 import cv2
 
 
+print("all_sensor_sample.py")
 class AllSensorBot(object):
     def __init__(self, 
                  use_lidar=False, use_camera=False, use_imu=False,

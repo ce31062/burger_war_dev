@@ -13,6 +13,8 @@ from std_msgs.msg          import Float32
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Quaternion
 
+print("enemy_detector.pyを実行する")
+
 class EnemyDetector:
     def __init__(self):
         #self.map_data#このクラスが持つ「num」変数に引数を格納

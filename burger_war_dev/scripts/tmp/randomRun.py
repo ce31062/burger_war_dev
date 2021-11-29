@@ -14,7 +14,7 @@ import random
 
 from geometry_msgs.msg import Twist
 
-
+print("RandomRun.pyを実行する")
 class RandomBot():
     def __init__(self, bot_name="NoName"):
         # bot name 

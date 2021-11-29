@@ -6,7 +6,7 @@ import numpy as np
 from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image
 
-
+print("enemy_camera_detector.pyを実行する")
 
 # camera image 640*480
 img_w = 640
@@ -235,6 +235,7 @@ enemyTable = [0.6,
 class EnemyCameraDetector:
 
     def __init__(self):
+	print("EnemuCameraDetectorの初期化")
         self.bridge = CvBridge()
         self.ImgDebug = False
 
@@ -250,6 +251,7 @@ class EnemyCameraDetector:
 
     
     def find_rect_of_target_color(self, image, color_type): # r:0, g:1, b:2
+	print("Target colorの長方形を見つける")
         hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV_FULL)
         h = hsv[:, :, 0]
         s = hsv[:, :, 1]
@@ -302,6 +304,7 @@ class EnemyCameraDetector:
         return rects
 
     def detect_enemy(self, data):
+	print("敵を見つける")
         redFound = False
         greenFound = False
 
@@ -395,6 +398,7 @@ class EnemyCameraDetector:
         return self.red_angle, self.green_angle, self.blue_angle
 
     def trackEnemy(self, rect):
+	print("敵を追跡する")
         # Found enemy
         if rect is not None:
             # Estimate the distance from enemy.

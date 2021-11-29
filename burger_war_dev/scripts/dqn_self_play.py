@@ -1,6 +1,33 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+"""""""""
+設計方針:
+    ・基本動作はLidar敵検出を行いつつ、学習済みモデル(TGS)で推論動作する。(BASIC)
+    ・敵が一定距離内になった場合に自身の左右背後を取られないようにしつつ (DEFENCE)
+    ・敵の左右、背後のターゲットを取るべく、敵に向かって進んでいく。(ATTACK)
+    ・お見合いによる時間切れを防ぐため、一定時間間隔で前進後退する機能を実装 (escape)
+将来構想(発散)：
+    ・お見合い状態 and 自分がリード and 相手が動かない　条件の時はそのまま膠着逃げ切りを狙う
+    ・敵との間合い(閾値)をハイパーパラメータとして最適値を探索させる
+　　・敵の戦略をクラスタリング(教師なし学習)して、分類に応じた戦略選択を学習させる
+    ・学習時、学習に応じて敵を徐々にレベルアップさせて学習が滞らないように、多様性を持たせる
+    ・エポックがある程度進んだら、依然にsaveした学習済みモデルと対戦させて正しい学習ができているか確認する
+"""""""""
+debug_naoya = True
+from enemy_camera_detector import EnemyCameraDetector
+from enum import Enum
+import math
+import requests
+import tf
+import actionlib
+import angles
+from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
+from nav_msgs.msg import Odometry
+from geometry_msgs.msg import Twist
+from sensor_msgs.msg import LaserScan, Image
+from std_srvs.srv import Empty, EmptyRequest, EmptyResponse
+# added above libraries
 import os
 import sys
 import time
@@ -8,7 +35,6 @@ import subprocess
 import json
 import requests
 import copy
-
 import rospy
 import rosparam
 from geometry_msgs.msg import Pose, Point, Quaternion, Twist, PoseWithCovarianceStamped, Vector3
@@ -19,18 +45,19 @@ from std_srvs.srv import Empty
 from gazebo_msgs.msg import ModelState
 from gazebo_msgs.srv import SetModelState
 from tf import transformations as tft
-
 import cv2
 import torch
 import torchvision
 import numpy as np
 from cv_bridge import CvBridge, CvBridgeError
-
 from utils.state import State
 from utils.wallAvoid import punish_by_count, punish_by_min_dist, manual_avoid_wall_2
 from utils.lidar_transform import lidar_transform
 from agents.agent import Agent
 
+if debug_naoya:
+    print("TGS+Rulu-base operation mode")
+print("dqn_self_play.pyを実行")
 
 # config
 FIELD_SCALE = 2.4
@@ -53,6 +80,112 @@ def send_to_judge(url, data):
                         headers={'Content-Type': 'application/json'}
                         )
     return res
+
+"""
+Respect for SeigoRun2.py
+"""
+class ActMode(Enum):
+    BASIC = 1
+    ATTACK = 2
+    ESCAPE = 3
+    DEFENCE = 4
+
+class SeigoBot2:
+    # ここで状態決定　
+    def mode_decision(self):
+        exist, distance, direction_diff = self.detect_enemy()
+        if exist == False:  # いなかったら巡回
+            return ActMode.BASIC
+        else:
+            # print self.enemy_body_remain, self.all_field_score[0:6]
+            self.enemy_info = [distance, direction_diff]
+            if self.enemy_body_remain <= 1 and distance < 1.0 and self.Is_lowwer_score == False:
+                return ActMode.DEFENCE
+            if distance < self.snipe_th and self.enable_escape_approach == True and self.Is_lowwer_score == True:
+                # if low score, once attack then try to escape.
+                return ActMode.ESCAPE
+            if distance < self.snipe_th:  # 発見して近かったら攻撃
+                return ActMode.ATTACK
+            # rospy.loginfo('detect enemy but so far')
+            return ActMode.BASIC
+
+    def enemy_position_callback(self, position):
+        self.enemy_position = position
+
+    def lidar_callback(self, scan):
+        self.scan = scan
+
+    def detect_enemy(self):
+        exist, distance, direction_diff = self.detect_from_lidar()
+        # もしカメラで確認できる範囲なら
+
+        # if abs(direction_diff) < self.camera_angle_limit and distance > self.camera_range_limit[0] and distance < self.camera_range_limit[1]:
+        #     exist = exist and self.is_camera_detect  # カメラとLidarのandをとる
+        #     if exist == False:
+        #         rospy.loginfo('detect enemy from LiDAR, but cannot detect from camera. So ignore')
+        return exist, distance, direction_diff
+    # RESPECT @koy_tak
+    def detect_collision(self):
+        front = False
+        rear = False
+        deg_90 = int((math.pi/2.0)/self.scan.angle_increment)
+        front_count = len([i for i in self.scan.ranges[0:int(deg_90)] if i < self.distance_to_wall_th]) + \
+            len([i for i in self.scan.ranges[int(deg_90)*3:-1]
+                 if i < self.distance_to_wall_th])
+        rear_count = len([i for i in self.scan.ranges[int(
+            deg_90):int(deg_90)*3] if i < self.distance_to_wall_th])
+        if front_count > 0 and rear_count == 0:
+            front = True
+            rospy.logwarn("front collision !!!")
+        elif front_count == 0 and rear_count > 0:
+            rear = True
+            rospy.logwarn("rear collision !!!")
+        elif front_count > 0 and rear_count > 0:
+            front = front_count > rear_count
+            rear = not front
+            rospy.logwarn("both side collision !!!")
+        # if (self.scan.ranges[0] != 0 and self.scan.ranges[0] < self.distance_to_wall_th) or (self.scan.ranges[10] != 0 and self.scan.ranges[10] < self.distance_to_wall_th) or (self.scan.ranges[350] != 0 and self.scan.ranges[350] < self.distance_to_wall_th):
+        #     rospy.logwarn('front collision !!')
+        #     front = True
+        # if (self.scan.ranges[180] != 0 and self.scan.ranges[180] < self.distance_to_wall_th) or (self.scan.ranges[190] != 0 and self.scan.ranges[190] < self.distance_to_wall_th) or (self.scan.ranges[170] != 0 and self.scan.ranges[170] < self.distance_to_wall_th):
+        #     rospy.logwarn('rear collision !!')
+        #     rear = True
+        return front, rear
+
+    def status_transition(self):
+        def get_mode_txt(n):
+            if n == ActMode.BASIC:
+                return 'basic'
+            elif n == ActMode.ATTACK:
+                return 'attack'
+            elif n == ActMode.ESCAPE:
+                return 'escape'
+            elif n == ActMode.DEFENCE:
+                return 'defence'
+            else:
+                return 'unknown'
+
+        pre_act_mode = self.act_mode
+        self.act_mode = self.mode_decision()
+        if self.act_mode == ActMode.BASIC:
+            self.basic()
+        elif self.act_mode == ActMode.ATTACK:
+            self.attack()
+        elif self.act_mode == ActMode.DEFENCE:
+            self.defence()
+        elif self.act_mode == ActMode.ESCAPE:
+            if pre_act_mode != self.act_mode:
+                self.escape_mode_start_time = rospy.Time.now().to_sec()
+            self.escape()
+        else:
+            rospy.logwarn('unknown actmode !!!')
+
+        if pre_act_mode != self.act_mode:
+            text = 'change to ' + get_mode_txt(self.act_mode)
+            rospy.loginfo(text)
+
+
+
 
 
 # main class
@@ -109,6 +242,12 @@ class DQNBot:
 
         # rostopic subscription
         self.lidar_sub = rospy.Subscriber('scan', LaserScan, self.callback_lidar)
+        if debug_naoya:
+            self.scan = LaserScan()
+        if debug_naoya:
+            self.camera_detector = EnemyCameraDetector()
+            self.is_camera_detect = False
+            self.camera_detect_angle = -360
         self.image_sub = rospy.Subscriber('image_raw', Image, self.callback_image)
         self.state_sub = rospy.Timer(rospy.Duration(0.5), self.callback_warstate)
 
@@ -472,7 +611,7 @@ class DQNBot:
 
     
 if __name__ == "__main__":
-
+    print("dqn_self_play_main_.pyを実行")
     rospy.init_node('dqn_run')
     JUDGE_URL = rospy.get_param('/send_id_to_judge/judge_url')
 
@@ -487,7 +626,7 @@ if __name__ == "__main__":
     print("name: {}, server: {}".format(ROBOT_NAME, JUDGE_URL))
 
     # parameters
-
+    print("parametersの設定")
     ONLINE = True
     POLICY = "epsilon"
     DEBUG = False
@@ -496,10 +635,12 @@ if __name__ == "__main__":
     MANUAL_AVOID = False
 
     # wall avoidance
+    print("wall avoidanceの設定")
     DIST_TO_WALL_TH = 0.18
     NUM_LASER_CLOSE_TO_WALL_TH = 30
 
     # action lists
+    print("action lists設定")
     VEL = 0.2
     OMEGA = 30 * 3.14/180
     ACTION_LIST = [
@@ -511,6 +652,7 @@ if __name__ == "__main__":
     ]
 
     # agent config
+    print("agent config設定")
     UPDATE_Q_FREQ = 10
     BATCH_SIZE = 16
     MEM_CAPACITY = 2000

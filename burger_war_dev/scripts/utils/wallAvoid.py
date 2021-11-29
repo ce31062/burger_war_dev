@@ -3,6 +3,7 @@
 
 import torch
 
+print("wallAvoid.pyを実行する")
 
 def punish_by_count(lidar, dist_th=0.2, count_th=90):
     # Check LiDAR data to punish for AMCL failure
@@ -18,7 +19,7 @@ def punish_by_count(lidar, dist_th=0.2, count_th=90):
 
         # Punish if too many lasers close to obstacle
         if count_too_close > count_th:
-            print("### Too close to the wall, get penalty ###")
+            print("### Too close to the wall, get penalty1 ###")
             punish = -0.5
 
     return punish
@@ -30,7 +31,7 @@ def punish_by_min_dist(lidar, dist_th=0.15):
     if lidar is not None:
         lidar_1d = lidar.squeeze()
         if lidar_1d.min() < dist_th:
-            print("### Too close to the wall, get penalty ###")
+            print("### Too close to the wall, get penalty2 ###")
             punish = -0.5
 
     return punish
@@ -58,6 +59,7 @@ def manual_avoid_wall(lidar, dist_th=0.2, count_th=90):
         ], key=lambda e: e[0])
             
     else:
+	print("safety_for_wall")
         avoid = False
         linear_x = None
         angular_z = None

@@ -12,6 +12,7 @@ import actionlib
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 import actionlib_msgs
 
+print("navirun.pyを実行する")
 # Ref: https://hotblackrobotics.github.io/en/blog/2018/01/29/action-client-py/
 
 #from std_msgs.msg import String

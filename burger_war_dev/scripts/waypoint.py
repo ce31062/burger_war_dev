@@ -5,7 +5,7 @@ import csv
 import math
 import numpy as np
 
-
+print("waypoint.pyを実行する")
 class Waypoints:
 
     def __init__(self, path, side):

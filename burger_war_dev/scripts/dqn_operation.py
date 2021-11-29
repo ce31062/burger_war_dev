@@ -32,6 +32,8 @@ from utils.lidar_transform import lidar_transform
 
 import cv2
 
+print("dqn_operation.pyを実行")
+
 # config
 FIELD_SCALE = 2.4
 FIELD_MARKERS = [
@@ -44,7 +46,6 @@ ROBOT_MARKERS = {
 }
 
 JUDGE_URL = ""
-
 
 # functions
 def send_to_judge(url, data):
@@ -465,7 +466,7 @@ class DQNBot:
 
     
 if __name__ == "__main__":
-
+    print("dqn_operation.py_mainを開始")
     rospy.init_node('dqn_run')
     JUDGE_URL = rospy.get_param('/send_id_to_judge/judge_url')
 
