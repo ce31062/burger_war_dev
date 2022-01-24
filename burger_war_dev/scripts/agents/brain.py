@@ -49,7 +49,7 @@ class Brain:
 
         # Set device type; GPU or CPU (Use GPU if available)
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-        self.device = torch.device('cpu') #temporary setting
+        # self.device = torch.device('cpu') #temporary setting
         self.policy_net = self.policy_net.to(self.device)
 
         self.target_net = self.target_net.to(self.device)
