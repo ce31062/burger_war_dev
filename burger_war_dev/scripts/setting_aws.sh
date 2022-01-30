@@ -10,11 +10,11 @@ sudo apt install -y libarmadillo-dev libarmadillo8  # necessary to install obsta
 sudo apt install -y wget
 sudo apt install -y xdotool curl wmctrl
 
+# library install
+cd $HOME/catkin_ws/src/burger_war_dev
+pip install -r requirements.txt
+
 # catkin build
 cd $HOME/catkin_ws
 catkin build
 source ~/catkin_ws/devel/setup.bash
-
-# library install
-cd $HOME/catkin_ws/src/burger_war_dev
-pip install -r requirements.txt
