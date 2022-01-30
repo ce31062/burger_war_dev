@@ -9,6 +9,7 @@ sudo apt install -y ros-melodic-teb-local-planner
 sudo apt install -y libarmadillo-dev libarmadillo8  # necessary to install obstacle_detector
 sudo apt install -y wget
 sudo apt install -y xdotool curl wmctrl
+sudo apt install -y emacs
 
 # obstacle detectorの取得
 cd ~/catkin_ws/src
@@ -21,4 +22,4 @@ pip install -r requirements.txt
 # catkin build
 cd $HOME/catkin_ws
 catkin build
-source ~/catkin_ws/devel/setup.bash
+source ~/.bashrc
