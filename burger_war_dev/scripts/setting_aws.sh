@@ -10,6 +10,10 @@ sudo apt install -y libarmadillo-dev libarmadillo8  # necessary to install obsta
 sudo apt install -y wget
 sudo apt install -y xdotool curl wmctrl
 
+# obstacle detectorの取得
+cd ~/catkin_ws/src
+git clone https://github.com/tysik/obstacle_detector.git
+
 # library install
 cd $HOME/catkin_ws/src/burger_war_dev
 pip install -r requirements.txt
