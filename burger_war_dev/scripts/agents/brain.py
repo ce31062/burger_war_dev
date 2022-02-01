@@ -246,8 +246,7 @@ class Brain:
 
     def load_model(self, path):
         print('Loading model...: {}'.format(path))
-        #model = torch.load(path)
-        model = torch.load(path, torch.device('cpu'))        
+        model = torch.load(path)
         self.policy_net.load_state_dict(model)
         self.update_target_network()
 

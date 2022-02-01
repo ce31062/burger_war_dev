@@ -30,8 +30,6 @@ import threading
 import queue
 import select
 import multiprocessing as mp
-import multiprocessing.connection as connection
-import sys
 
 def send_recv(conn, sdata):
     conn.send(sdata)
@@ -268,15 +266,12 @@ class QueueCommunicator(object):
             try:
                 conn.send(send_data)
             except socket.error:
-                print("_send_thread, socket.error")
                 #except ConnectionResetError:
                 #except BrokenPipeError:
                 self.disconnect(conn)
 
     def _recv_thread(self):
         while not self.shutdown_flag:
-            #conns = connection.wait(self.conns, timeout=0.3)
-            #for conn in conns:
             conn_list, _, _ = select.select(self.conns, [], [], 0.3)
             for conn in conn_list:
                 try:
@@ -284,8 +279,6 @@ class QueueCommunicator(object):
                 except socket.error:
                     #except ConnectionResetError:
                     #except EOFError:
-                    print("_recv_thread, socket.error")
-                    sys.exit(1)
                     self.disconnect(conn)
                     continue
                 while not self.shutdown_flag:
