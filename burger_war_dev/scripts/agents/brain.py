@@ -49,7 +49,7 @@ class Brain:
 
         # Set device type; GPU or CPU (Use GPU if available)
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-        self.device = torch.device('cpu') #temporary setting
+        #self.device = torch.device('cpu') #temporary setting
         self.policy_net = self.policy_net.to(self.device)
 
         self.target_net = self.target_net.to(self.device)
@@ -246,7 +246,8 @@ class Brain:
 
     def load_model(self, path):
         print('Loading model...: {}'.format(path))
-        model = torch.load(path)
+        #model = torch.load(path)
+        model = torch.load(path, torch.device('cpu'))        
         self.policy_net.load_state_dict(model)
         self.update_target_network()
 

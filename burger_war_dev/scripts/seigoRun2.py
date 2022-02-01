@@ -25,7 +25,6 @@ from cv_bridge import CvBridge, CvBridgeError
 
 from std_srvs.srv import Empty, EmptyRequest, EmptyResponse
 
-print("SeigoRun2.pyを実行する")
 
 class ActMode(Enum):
     BASIC = 1
@@ -133,13 +132,12 @@ class SeigoBot2:
             '~escape_approach_distance_th_max', default=0.85)
         self.escape_approach_time_interval = rospy.get_param(
             '~escape_approach_time_interval', default=6)
-"""
-#使用しない
+
     def imageCallback(self, data):
         #print("imageCallback+", rospy.Time.now())
         self.detect_from_camera(data)
         #print("imageCallback-", rospy.Time.now())
-"""
+
     def get_position_from_tf(self, c1, c2):
         trans = []
         rot = []
@@ -150,8 +148,7 @@ class SeigoBot2:
         except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
             rospy.logwarn('tf error')
             return trans, rot, False
-"""
-#採用
+
     def enemy_position_callback(self, position):
         self.enemy_position = position
 
@@ -167,7 +164,7 @@ class SeigoBot2:
         #     if exist == False:
         #         rospy.loginfo('detect enemy from LiDAR, but cannot detect from camera. So ignore')
         return exist, distance, direction_diff
-"""
+
     def detect_from_lidar(self):
         time_diff = rospy.Time.now().to_sec() - self.enemy_position.header.stamp.to_sec()
         if time_diff > self.enemy_time_tolerance:   # 敵情報が古かったら無視
@@ -207,8 +204,7 @@ class SeigoBot2:
             else:
                 self.is_camera_detect = False
                 self.camera_detect_angle = -360
-"""
-# 採用
+
     # RESPECT @koy_tak
     def detect_collision(self):
         front = False
@@ -238,7 +234,7 @@ class SeigoBot2:
         #     rospy.logwarn('rear collision !!')
         #     rear = True
         return front, rear
-"""
+
     # RESPECT @F0CACC1A
     def WarState_timerCallback(self, state):
         self.getWarState()
@@ -290,8 +286,7 @@ class SeigoBot2:
         else:
             self.Is_lowwer_score = False
         #print("Is_lowwer_score", self.Is_lowwer_score)
-"""
-#採用
+
     # ここで状態決定　
     def mode_decision(self):
         exist, distance, direction_diff = self.detect_enemy()
@@ -309,9 +304,7 @@ class SeigoBot2:
                 return ActMode.ATTACK
             # rospy.loginfo('detect enemy but so far')
             return ActMode.BASIC
-"""
-"""
-# 採用
+
     def status_transition(self):
         def get_mode_txt(n):
             if n == ActMode.BASIC:
@@ -343,7 +336,7 @@ class SeigoBot2:
         if pre_act_mode != self.act_mode:
             text = 'change to ' + get_mode_txt(self.act_mode)
             rospy.loginfo(text)
-"""
+
     def basic(self):
         # vaild, vx = self.recovery()  # ぶつかってないか確認
         # if vaild == True:
