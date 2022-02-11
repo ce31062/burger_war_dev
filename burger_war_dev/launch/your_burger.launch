@@ -1,19 +1,19 @@
 <?xml version="1.0"?>
 <launch>
   <arg name="side" default="r"/> <!-- "b" = blue side, "r" = red side  -->
-  <arg name="self_play" default="1"/>
+  <arg name="self_play" default="0"/>
 
     <!-- You can change control program  -->
 
     <include file="$(find burger_navigation)/launch/burger_navigation.launch" />
 
-    <group if="$(eval self_play==1)"> 
+    <group if="$(eval self_play==0)"> 
       <node pkg="burger_war_dev" type="dqn_operation.py" name="DQNRun" output="screen">
         <param name="side" value="$(arg side)"/>
       </node>
     </group>
 
-    <group if="$(eval self_play==0)"> 
+    <group if="$(eval self_play==1)"> 
       <node pkg="burger_war_dev" type="dqn_self_play.py" name="DQNRun" output="screen">
         <param name="side" value="$(arg side)"/>
       </node>
