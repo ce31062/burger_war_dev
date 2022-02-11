@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-print("net.pyを実行する")
 class Net(nn.Module):
     def __init__(self, output_size):
         """
